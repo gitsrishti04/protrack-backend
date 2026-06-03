@@ -1,0 +1,24 @@
+# Virtual environment
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment variables — never commit secrets
+.env
+
+# Trained ML model files — generated locally via train scripts
+*.pkl
+
+# Training data CSVs — generated locally
+*.csv
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
