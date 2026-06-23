@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.project import Project
+from app.models.task import Task
 from app.models.project_member import ProjectMember
 from app.dependencies import get_current_user
 
@@ -31,11 +32,38 @@ def get_dashboard(
     delayed = len([p for p in projects if p.status == "delayed"])
     on_track = len([p for p in projects if p.status == "on_track"])
 
+    # Average completion rate across all projects in scope
+    completion_rate = round(
+        sum(p.completion for p in projects) / len(projects)
+    ) if projects else 0
+
+    # Average resource utilization: for each project, utilization =
+    # (completed tasks / total tasks) * 100, then averaged across projects
+    all_tasks = db.query(Task).all()
+    tasks_by_project = {}
+    for t in all_tasks:
+        tasks_by_project.setdefault(t.project_id, []).append(t)
+
+    project_utils = []
+    for p in projects:
+        ptasks = tasks_by_project.get(p.id, [])
+        pt_total = len(ptasks)
+        if pt_total > 0:
+            pt_completed = len([t for t in ptasks if t.status == "completed"])
+            project_utils.append(round(pt_completed / pt_total * 100))
+
+    avg_resource_util = round(
+        sum(project_utils) / len(project_utils)
+    ) if project_utils else 0
+
     return {
         "total": total,
         "completed": completed,
         "delayed": delayed,
         "on_track": on_track,
+        "activeProjects": on_track,
+        "completionRate": completion_rate,
+        "avgResourceUtil": avg_resource_util,
         "role": role    # pass role through so frontend can branch if needed
     }
 
